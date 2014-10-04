@@ -1,0 +1,115 @@
+#include<iostream>
+#include<string>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<map>
+#include<memory.h>
+#include<algorithm>
+#include<functional>
+using namespace std;
+#define mmset(x,y) memset(x,y,sizeof(x));
+int c[101][101];
+int pre[101][101]; 
+
+string s1,s2,virus;
+int check(int i,int j)
+{
+	int k = virus.size()-1;
+	if(virus[k] != s1[i-1]) 
+		return 1;
+	k-- ;
+	i--;
+	j-- ;
+	if( k< 0) 
+		return 0;
+
+
+	while(pre[i][j]!=0) 
+	{
+		if(pre[i][j] ==2 ) 
+		{
+			if(virus[k] != s1[i-1] ) 
+				return 1;
+			k-- ;
+
+			if( k<0) 
+				return 0;
+			i-- ;
+			j-- ;
+		}
+		else if( pre[i][j] ==-1) 
+		{
+			i--;
+		}
+		else 
+			j --;
+
+	}
+
+	return 0;
+
+}
+int main(int argc,char** argv)
+{
+	while(cin >> s1 >>s2>>virus ) 
+	{
+		mmset(c,0);
+		mmset(pre,0); 
+		c[0][0] = 0;
+		int n = s1.size();
+		int m = s2.size();
+		for(int i=1;i<=n;i++)
+			for(int j=1;j<=m;j++) 
+			{
+				if(   s1[i-1] == s2[j-1] ) 
+				{
+					if( !check(i,j)) 
+					{
+						c[i][j] = c[i-1][j-1] ;
+						pre[i][j] =2 ;
+					}
+					else 
+					{
+						c[i][j] = c[i-1][j-1] +1 ;
+						pre[i][j] = 2;
+					}
+				}
+				else 
+				{
+					c[i][j] = max(c[i-1][j],c[i][j-1]) ;
+					if(c[i-1][j] >c[i][j-1] ) 
+						pre[i][j] =  -1;
+					else 
+						pre[i][j] =  1;
+				}
+			}
+		string res;
+		int i =n ;
+		int j =m;
+		while(pre[i][j] !=0 ) 
+		{
+			if( pre[i][j] ==2 ) 
+			{
+				res.push_back(s2[j-1]) ;
+				i--;
+				j--;
+			}
+			else if(pre[i][j] ==-1) 
+				i--;
+			else 
+				j--;
+		}
+		if ( res.size() >0) 
+			for(int i=res.size()-1;i>=0;i--)
+				printf("%c",res[i]) ;
+		else
+			printf("0");
+		printf("\n");
+
+
+
+	}
+	return 0;
+}
+

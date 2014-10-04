@@ -1,0 +1,290 @@
+#include<iostream>
+#include<string>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<map>
+#include<memory.h>
+#include<algorithm>
+#include<functional>
+using namespace std;
+#define fill(x,y) (memset(x,y,sizeof(x)))
+#define sz(x) ((int) (x).size())
+
+
+
+namespace NumberTheory
+{
+	
+	template<typename _Integer>
+		class Prime
+		{
+			public : 
+				vector <bool> isprime; 
+				vector <_Integer > prime;
+				//生成小于maxNumber的素数表
+				_Integer each(_Integer maxNumber) // O(n)
+				{
+					isprime.assign(maxNumber,false);
+					for(_Integer i=2;i<maxNumber;i++)
+					{
+						if(!isprime[i])
+							prime.push_back(i);
+						for(_Integer j=0; i*prime[j]<maxNumber;j++) 
+						{
+							isprime[i*prime[j]]=1; 
+							if(i%prime[j]==0)  
+								break;      
+						}                
+					}
+				}
+		};
+	Prime<int> p;
+
+	template<typename _Integer> 
+		class DesPrime
+		{
+			public:
+				vector<_Integer> prime;
+				vector<_Integer> exp; 
+		};
+	//a^b%m  O( (logb)^3  )
+	template<typename _Integer> 
+		_Integer ModularExp(_Integer a ,_Integer b,_Integer m) 
+		{
+			_Integer sum ; 
+			for(sum =1 ;b;b>>=1,a=(a*a)%m) 
+				if(b&1) 
+					sum = (sum*a) %m ;
+			return sum %m;
+		}
+
+	//欧几里得算法 || 辗转相除法
+	template<typename _Integer>
+		_Integer gcd(_Integer a,_Integer b) 
+		{
+			return b?gcd(b,a%b):a;
+		}
+
+	//扩展欧几里得算法
+	template<typename _Integer> 
+		_Integer exgcd(_Integer a,_Integer b,_Integer &x,_Integer &y) 
+		{
+			if(b==0) 
+			{
+				x =1 ;
+				y =0 ; 
+				return a ;
+			}
+			_Integer d= exgcd(b,a%b,x,y) ;
+			_Integer temp=x;
+			x = y;
+			y = temp - (a/b)*y ;
+			return d ;
+		}
+
+	//唯一分解定理
+	template<typename _Integer>
+		DesPrime<_Integer> decomposition(_Integer key)
+		{
+			 //Prime<_Integer>  p;
+			//p.each((_Integer) sqrt(  key) +1 );
+			DesPrime<_Integer>  temp;
+			for(int i=0 ;p.prime[i] * p.prime[i] <=key ;i++) 
+			{
+				if(key%p.prime[i] ==0) 
+				{
+					temp.prime.push_back(p.prime[i]);
+					temp.exp.push_back(0);
+					do
+					{
+						temp.exp[temp.exp.size()-1] ++;
+						key = key /p.prime[i] ;
+					}while(key%p.prime[i] == 0 ) ;
+				}
+			}
+			if( key>1 ) 
+			{
+				temp.exp.push_back(1) ;
+				temp.prime.push_back(key);
+			}
+			return temp;
+		}
+
+} ;
+
+namespace Tree
+{
+	class Node
+	{
+		public: 
+			int l,r,f;
+			int sl,sr;
+			int val;
+			int min;
+	} ;
+
+	class SegmentTree
+	{
+		public:
+			vector<Node> elem;
+			int root;
+			int _create(int l ,int r ,int f, int val)
+			{
+				Node temp;
+				temp.sl = l;
+				temp.sr = r;
+				if(r-l ==1 ) 
+				{
+					temp.l = temp .r = -1 ;
+					temp.f = f;
+					temp.val =val;
+					temp.min = val;
+					elem.push_back(temp);
+					return elem.size() -1 ; 
+				}
+				elem.push_back(temp);
+				int index = elem.size()-1;
+				temp.l = _create(l,(l+r) /2,index, val);
+				temp .r = _create((l+r)/2,r,index, val);
+				temp.f = f; 	
+				elem[index] = temp;
+				return index;
+			}
+			void create(int l,int r ,int val) 
+			{
+				root = _create(l,r,-1,val);
+			}
+			void _insert(int node,int pos,int val) 
+			{
+				if(elem[node].sr-elem[node].sl == 1 ) 
+				{
+					elem[node].val = val;
+					elem[node].min = val;
+					updateUp(elem[node].f);
+					return;
+				}
+				int mid = (elem[node].sl +elem[node].sr )/2 ;
+				if( pos >=mid   )
+					_insert(elem[node].r,pos,val);
+				else 
+					_insert(elem[node].l,pos,val);
+			}
+			void insert(int pos,int val)
+			{
+				_insert(root,pos,val);
+			}
+			int relaxMin(int node) 
+			{
+				if(elem[node].sr - elem[node].sl ==1) 
+					return elem[node].min; 
+				else 
+					return 	elem[node].min = min(relaxMin(elem[node].l),relaxMin(elem[node].r));
+			}
+			void updateUp(int node)
+			{
+				elem[node].min = min(elem[elem[node].l].min,elem[elem[node].r].min);
+
+				if(elem[node].f == -1) 
+					return;
+				updateUp(elem[node].f);
+			}
+			int _getMin(int node,int l,int r) 
+			{
+				int mid =( elem[node].sl + elem[node].sr )/ 2; 
+				if(elem[node].sr- elem[node].sl == 1) 
+					return elem[node].min;
+				if( r <=  mid) 
+					return  _getMin(elem[node].l,l,r) ;
+				else if( l >= mid) 
+					return _getMin(elem[node].r,l,r) ;
+				else 
+					return min(_getMin(elem[node].l,l,mid ) , _getMin( elem[node].r,mid,r) ) ;
+			}
+			int getMin(int l,int r) 
+			{
+				return _getMin(root,l,r);
+			}
+	} ;
+
+};
+using namespace NumberTheory;
+
+using namespace Tree;
+
+int n,a,b;
+vector<int>x;
+vector<int>dp;
+map<int,bool> xmap;
+DesPrime<int> d ;
+int _max;
+const int MAXN = 1e9 + 5;
+SegmentTree st;
+
+void DFS(int depth,int mul) 
+{
+	if (depth == d.prime.size()) 
+	{
+		if(xmap[mul] && mul >_max) 
+			_max =mul;
+	}
+	if( depth >= d.prime.size() ) 
+		return;
+	for(int i=0;i<=d.exp[depth];i++) 
+	{
+		int temp = mul;
+		mul  = mul * pow(d.prime[depth], i)  ;
+		DFS(depth+1,mul) ;
+		mul = temp;
+	}
+}
+
+void in()
+{
+	cin >> n ;
+	for(int i=0;i<n;i++) 
+	{
+		int temp;
+		cin>>temp;
+		x.push_back(temp );
+		xmap[temp] = true;
+	}
+	cin>> a>>b;
+}
+int main(int argc,char** argv)
+{
+	in();
+	int m = a-b;
+	dp.assign(m+1,0);
+	st.create(0,m+1,MAXN);
+	st.relaxMin(st.root);
+	dp[m] = 0;
+	st.insert(m,dp[m ]);
+	p.each((int)(1e9+5)) ;
+	int count =0; 
+	for(int i =m-1;i>=0;i--) 
+	{
+		count ++;
+		int key = i + b;
+		d = decomposition(key );
+		_max =-1;
+		DFS(0,1);
+		if(_max ==-1) 
+			dp[i] = dp[i+1] +1;
+		else 
+		{
+			int up; 
+			if( _max+i -1 > m) 
+				up = m;
+			else 
+				up = _max+i -1 ;
+			dp[i] = 1+  st.getMin(i+1,up+1 );
+		}
+		st.insert(i,dp[i]);
+		if(count % 1000 == 0 ) 
+			cout <<i<<endl;
+	}
+	cout<< dp[0] <<endl;
+	return 0;
+}
+
